@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs height="200" width="320" title="OEDILF Limericks" title_url="http://www.oedilf.com/" description="OEDILF Limericks" screenshot="http://bp1.blogger.com/_CNrEtQlaUgk/R6CTHW6exwI/AAAAAAAAAKc/x2wLeFsL6os/s1600-h/oedilfpreview.png" thumbnail="http://bp0.blogger.com/_CNrEtQlaUgk/R6CSPG6exuI/AAAAAAAAAKM/LD-RXdp4zio/s1600-h/oedilf_thumb.png" author="Josh Cronemeyer" author_email="giosue_c@hotmail.com" author_link="http://www.cuberick.com/" render_inline="optional">
+    <Require feature="setprefs"/>
+  </ModulePrefs>
+  <UserPref name="user" display_name="OEDILF user number" default_value=""/>
+  <UserPref name="filter" display_name="Filter Adult Material" datatype="bool" default_value="false"/>
+  <UserPref name="random" display_name="Random" datatype="bool" default_value="true"/>
+  <Content type="html">
+
+    <![CDATA[
+    <style type="text/css">      
+      .oedilf_feed{font-size:9pt;}
+    </style>
+    <div id="feed" class="oedilf_feed"></div>
+    <script type="text/javascript">
+      const ADULT_FEED = "http://www.oedilf.com/db/feeds/rss.xml";
+      const SAFE_FEED = "http://www.oedilf.com/db/feeds/rssfiltered.xml";
+      const USER_FEED_PRE = "http://www.oedilf.com/db/feeds/Author";
+      const USER_FEED_POST = "rss.xml";
+      const NUMBER_TO_FETCH = 20;
+      
+      var Limerick = function(feed) {
+        var prefs = new _IG_Prefs(__MODULE_ID__);
+        var index = 0; // use latest limerick unless we should use a random one.
+        if (prefs.getBool("random")) {
+          var rand = Math.random() * (feed.Entry.length - 1);
+          index = Math.floor(rand);
+        } 
+        this.lim = feed.Entry[index];
+        this.title = feed.Title;
+        this.text = this.lim.Summary;
+        
+        this.word_defined = function() {
+          regex = / on (.*) by /;
+          wd = this.lim.Title.match(regex)[1];
+          wd = wd.replace(/\/n/, "");
+          return wd;
+        }
+      
+        this.author = function() {
+          regex = / by (.*)$/;
+          return this.lim.Title.match(regex)[1];
+        }
+      }
+      
+      function feed() {
+        var prefs = new _IG_Prefs(__MODULE_ID__);
+        if (!prefs.getBool("filter")) {
+          var feed = ADULT_FEED;
+        } else {
+          var feed = SAFE_FEED;
+        }
+        if (prefs.getString("user") != "") feed = USER_FEED_PRE + prefs.getString("user") + USER_FEED_POST;
+        return feed;
+      }
+      
+      function set_content(feed)
+      {
+        var limerick = new Limerick(feed);
+        var html = "";
+        html += '<a href="http://www.oedilf.com">' + limerick.title + '</a>';
+        html += '<h3>' + limerick.word_defined() + '</h3>';
+        html += '<b><i>By ' + limerick.author() + '</i></b><br>';
+        html += limerick.text;
+        
+        _gel("feed").innerHTML = html;
+        _IG_AdjustIFrameHeight();
+      }
+      
+      _IG_FetchFeedAsJSON(feed(), set_content, NUMBER_TO_FETCH, true);
+      _IG_AdjustIFrameHeight();
+    </script>
+
+    ]]>
+  </Content>
+</Module>
+
